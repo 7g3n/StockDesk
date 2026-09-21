@@ -9,7 +9,7 @@ import {
   type OrderFormValues,
 } from '@stockdesk/core';
 import { useEffect, useMemo, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { Button, Field, InlineError, Input, Modal, Select, Textarea } from '@/components/ui';
 import { useProducts } from '@/features/products/api';
@@ -45,7 +45,6 @@ export function NewOrderDialog({ open, onClose }: { open: boolean; onClose: () =
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -60,8 +59,11 @@ export function NewOrderDialog({ open, onClose }: { open: boolean; onClose: () =
     reset(EMPTY_VALUES);
   }, [open, reset]);
 
-  const watchedItems = watch('items');
-  const shippingFee = watch('shippingFee');
+  // useFieldArray の中の入力を watch() で購読すると、値は更新されても再描画が走らず、
+  // 小計や在庫不足の警告が古いまま残る（送信時の値は正しいので気付きにくい）。
+  // 配列の要素を監視するときは useWatch を使う。
+  const watchedItems = useWatch({ control, name: 'items' });
+  const shippingFee = useWatch({ control, name: 'shippingFee' });
 
   // 取り扱い中の商品だけを選べるようにする。終了した商品は DB 側でも弾かれる。
   const sellableProducts = useMemo(

@@ -33,8 +33,10 @@ stable
 as $$
 declare
   v_uid uuid := auth.uid();
+  -- nullif を挟むのは、設定が空文字のときに ''::jsonb が例外になるため。
+  -- 未設定（NULL）と空文字の両方を「ロール指定なし」として扱う。
   v_role text := coalesce(
-    current_setting('request.jwt.claims', true)::jsonb ->> 'role',
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role',
     ''
   );
 begin

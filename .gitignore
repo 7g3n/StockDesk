@@ -9,3 +9,6 @@ coverage/
 .wrangler/
 supabase/.temp/
 supabase/.branches/
+
+# wrangler のローカル用シークレット（service_role キーを含む）
+.dev.vars
