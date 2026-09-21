@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+
+/*
+ * 配色の方針
+ *
+ * 業務システムは1日中見る画面なので、彩度の高い色は「注意を引くべきもの」だけに取っておく。
+ * 面はグレーで構成し、在庫切れ（赤）・残りわずか（橙）・ステータス（青系）にだけ色を割り当てる。
+ * 色だけで意味を伝えないよう、バッジには必ず文字を添える（色覚特性への配慮）。
+ */
+@theme {
+  --color-brand-50: oklch(0.97 0.014 250);
+  --color-brand-100: oklch(0.93 0.032 250);
+  --color-brand-500: oklch(0.58 0.14 250);
+  --color-brand-600: oklch(0.51 0.14 250);
+  --color-brand-700: oklch(0.44 0.13 250);
+}
+
+@layer base {
+  html {
+    /* 日本語の可読性を優先し、游ゴシック系を先に置く */
+    font-family:
+      ui-sans-serif, system-ui, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI',
+      Meiryo, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /* 数量・金額は等幅の数字で揃える。桁が揃わない表は読み違えの元になる */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

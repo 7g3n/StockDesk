@@ -1,0 +1,6 @@
+# 改行は LF に統一する。Windows と CI/Linux の両方で作業するため、
+# 作業ツリーの見た目に関わらずリポジトリ上は LF を正とする。
+* text=auto eol=lf
+
+# 生成物・ロックファイルは差分レビューの対象外として扱う
+pnpm-lock.yaml linguist-generated=true -diff

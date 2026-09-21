@@ -1,0 +1,14 @@
+name = "stockdesk-cron"
+main = "src/index.ts"
+compatibility_date = "2024-10-22"
+
+# 在庫アラートの定期チェック。
+# JST 09:00（UTC 00:00）に1日1回。開店前に「今日発注すべきもの」が手元にある状態を作る。
+# Cron Triggers は UTC 固定なので、日本時間との対応をここに明記しておく。
+[triggers]
+crons = ["0 0 * * *"]
+
+[vars]
+# 通知の宛先など、秘密でない設定はここ。
+# SUPABASE_SERVICE_ROLE_KEY は `wrangler secret put` で登録し、ファイルには置かない。
+ALERT_MAIL_FROM = "stockdesk@example.com"

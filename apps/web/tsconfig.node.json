@@ -1,0 +1,10 @@
+{
+  // ビルド設定ファイルはブラウザではなく Node で実行される。
+  // アプリ本体（src）に Node のグローバルが紛れ込まないよう、tsconfig を分けている。
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts"]
+}
