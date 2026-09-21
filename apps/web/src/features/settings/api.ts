@@ -69,6 +69,10 @@ export type ShopSettingsInput = {
   phone: string;
   email: string;
   note: string;
+  // 発注推奨と通知の設定（Phase 4）
+  defaultLeadTimeDays: number;
+  defaultCoverDays: number;
+  largeOrderThreshold: number;
 };
 
 export function useUpdateShopSettings() {
@@ -84,6 +88,9 @@ export function useUpdateShopSettings() {
           phone: values.phone,
           email: values.email,
           note: values.note,
+          default_lead_time_days: values.defaultLeadTimeDays,
+          default_cover_days: values.defaultCoverDays,
+          large_order_threshold: values.largeOrderThreshold,
         })
         .eq('id', true)
         // .select().single() を付けているのは、RLS で弾かれた UPDATE が

@@ -19,4 +19,6 @@ export * from './order-import.js';
 export * from './sales.js';
 export * from './permissions.js';
 export * from './channel-mock.js';
+export * from './reorder.js';
+export * from './slack.js';
 export * from './database.types.js';

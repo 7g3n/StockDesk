@@ -36,6 +36,7 @@ function toProductRecord(values: ProductFormValues) {
     cost_price: values.costPrice,
     low_stock_threshold: values.lowStockThreshold,
     status: values.status,
+    lead_time_days: values.leadTimeDays,
   };
 }
 
@@ -48,6 +49,7 @@ export function toProductFormValues(product: Product): ProductFormValues {
     costPrice: product.cost_price,
     lowStockThreshold: product.low_stock_threshold,
     status: product.status,
+    leadTimeDays: product.lead_time_days,
   };
 }
 

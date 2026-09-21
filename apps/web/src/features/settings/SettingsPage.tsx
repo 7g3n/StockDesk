@@ -26,6 +26,7 @@ import {
   cn,
 } from '@/components/ui';
 import { useCan, useMyProfile } from '@/features/auth/permissions';
+import { useRecentNotifications } from '@/features/reorder/api';
 
 import {
   useMembers,
@@ -80,6 +81,9 @@ function ShopSettingsForm() {
       phone: '',
       email: '',
       note: '',
+      defaultLeadTimeDays: 7,
+      defaultCoverDays: 14,
+      largeOrderThreshold: 30000,
     },
   });
 
@@ -92,6 +96,9 @@ function ShopSettingsForm() {
       phone: settings.data.phone,
       email: settings.data.email,
       note: settings.data.note,
+      defaultLeadTimeDays: settings.data.default_lead_time_days,
+      defaultCoverDays: settings.data.default_cover_days,
+      largeOrderThreshold: settings.data.large_order_threshold,
     });
   }, [settings.data, reset]);
 
@@ -140,6 +147,59 @@ function ShopSettingsForm() {
       >
         <Textarea id="note" rows={2} disabled={!canEdit} {...register('note')} />
       </Field>
+
+      <div className="border-t border-slate-200 pt-4">
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">発注と通知</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field
+            label="既定のリードタイム（日）"
+            htmlFor="defaultLeadTimeDays"
+            hint="発注から入荷まで。商品ごとに上書きできます"
+          >
+            <Input
+              id="defaultLeadTimeDays"
+              type="number"
+              min={0}
+              step={1}
+              className="tabular"
+              disabled={!canEdit}
+              {...register('defaultLeadTimeDays', { valueAsNumber: true })}
+            />
+          </Field>
+
+          <Field
+            label="在庫カバー日数"
+            htmlFor="defaultCoverDays"
+            hint="入荷後に持っておきたい日数分"
+          >
+            <Input
+              id="defaultCoverDays"
+              type="number"
+              min={0}
+              step={1}
+              className="tabular"
+              disabled={!canEdit}
+              {...register('defaultCoverDays', { valueAsNumber: true })}
+            />
+          </Field>
+
+          <Field
+            label="大口注文の通知基準（円）"
+            htmlFor="largeOrderThreshold"
+            hint="この金額以上で Slack に通知します"
+          >
+            <Input
+              id="largeOrderThreshold"
+              type="number"
+              min={0}
+              step={1}
+              className="tabular"
+              disabled={!canEdit}
+              {...register('largeOrderThreshold', { valueAsNumber: true })}
+            />
+          </Field>
+        </div>
+      </div>
 
       <InlineError message={formError} />
       {saved && <p className="text-sm text-emerald-700">保存しました。</p>}
@@ -240,6 +300,50 @@ function MemberList() {
   );
 }
 
+const NOTIFICATION_KIND_LABELS: Record<string, string> = {
+  low_stock: '在庫アラート',
+  large_order: '大口注文',
+};
+
+/**
+ * 送信済み通知の一覧。
+ *
+ * 通知は定期処理から送られるので、運営者からは「本当に送られたのか」が見えない。
+ * 記録を画面に出すことで、Slack に届かなかったときに
+ * 「送っていない」のか「送ったが届いていない」のかを切り分けられる。
+ */
+function NotificationLog() {
+  const notifications = useRecentNotifications();
+
+  if (notifications.isPending) return <LoadingBlock />;
+  if (notifications.isError) return <ErrorBlock message={toDisplayMessage(notifications.error)} />;
+  if (notifications.data.length === 0) {
+    return (
+      <div className="px-5 py-8 text-center text-sm text-slate-500">
+        まだ通知は送られていません。
+      </div>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-slate-100">
+      {notifications.data.map((notification) => (
+        <li key={notification.id} className="flex items-center justify-between gap-3 px-5 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-900">
+              {NOTIFICATION_KIND_LABELS[notification.kind] ?? notification.kind}
+            </p>
+            <p className="truncate font-mono text-xs text-slate-400">{notification.dedupe_key}</p>
+          </div>
+          <span className="shrink-0 text-xs text-slate-500">
+            {new Date(notification.sent_at).toLocaleString('ja-JP')}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * 設定画面。
  *
@@ -278,8 +382,19 @@ export function SettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="店舗情報" description="納品書の差出人欄に印字されます。" />
+          <CardHeader
+            title="店舗情報"
+            description="納品書の差出人欄に印字され、発注推奨と通知の基準にも使われます。"
+          />
           <ShopSettingsForm />
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="送信済みの通知"
+            description="定期処理が Slack に送った通知の記録です。同じ内容は二度送られません。"
+          />
+          <NotificationLog />
         </Card>
       </div>
     </>

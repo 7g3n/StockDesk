@@ -52,6 +52,8 @@ export type Database = {
           status: ProductStatusEnum;
           created_at: string;
           updated_at: string;
+          // 発注から入荷までの日数。null なら店舗の既定値（Phase 4）。
+          lead_time_days: number | null;
         };
         Insert: {
           id?: string;
@@ -62,6 +64,7 @@ export type Database = {
           cost_price?: number;
           low_stock_threshold?: number;
           status?: ProductStatusEnum;
+          lead_time_days?: number | null;
         };
         // stock_quantity を Update に含めないのは意図的。
         // 台帳を経由しない在庫更新を型の段階で防ぐ（DB 側でも列単位の GRANT で拒否される）。
@@ -73,6 +76,7 @@ export type Database = {
           cost_price?: number;
           low_stock_threshold?: number;
           status?: ProductStatusEnum;
+          lead_time_days?: number | null;
         };
         Relationships: [];
       };
@@ -197,6 +201,9 @@ export type Database = {
           email: string;
           note: string;
           updated_at: string;
+          default_lead_time_days: number;
+          default_cover_days: number;
+          large_order_threshold: number;
         };
         // 単一行テーブル。行の追加・削除は GRANT で塞いである。
         Insert: Record<string, never>;
@@ -207,7 +214,23 @@ export type Database = {
           phone?: string;
           email?: string;
           note?: string;
+          default_lead_time_days?: number;
+          default_cover_days?: number;
+          large_order_threshold?: number;
         };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          kind: string;
+          dedupe_key: string;
+          payload: Record<string, unknown>;
+          sent_at: string;
+        };
+        // 記録は claim_notification（service_role のみ）経由。
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
         Relationships: [];
       };
       sales_channels: {
@@ -348,6 +371,24 @@ export type Database = {
           p_note?: string;
         };
         Returns: number;
+      };
+      stock_velocity: {
+        Args: { p_window_days?: number };
+        Returns: {
+          product_id: string;
+          sku: string;
+          name: string;
+          stock_quantity: number;
+          low_stock_threshold: number;
+          lead_time_days: number | null;
+          sold_quantity: number;
+          observed_from: string | null;
+          last_sold_at: string | null;
+        }[];
+      };
+      claim_notification: {
+        Args: { p_kind: string; p_dedupe_key: string; p_payload?: Record<string, unknown> };
+        Returns: boolean;
       };
       set_member_role: {
         Args: {

@@ -15,6 +15,7 @@ const EMPTY_VALUES: ProductFormValues = {
   costPrice: 0,
   lowStockThreshold: 0,
   status: 'active',
+  leadTimeDays: null,
 };
 
 /**
@@ -147,6 +148,26 @@ export function ProductFormDialog({
             />
           </Field>
         </div>
+
+        <Field
+          label="リードタイム（日）"
+          htmlFor="leadTimeDays"
+          error={errors.leadTimeDays?.message}
+          hint="発注から入荷までの日数。空欄なら店舗の既定値を使います（発注推奨の計算に使用）"
+        >
+          <Input
+            id="leadTimeDays"
+            type="number"
+            min={0}
+            step={1}
+            placeholder="店舗の既定値を使う"
+            className="tabular"
+            // 空欄は「未設定」。0 と区別する必要があるので null に変換する。
+            {...register('leadTimeDays', {
+              setValueAs: (value) => (value === '' || value === null ? null : Number(value)),
+            })}
+          />
+        </Field>
 
         <Field label="説明" htmlFor="description" error={errors.description?.message}>
           <Textarea id="description" rows={2} {...register('description')} />

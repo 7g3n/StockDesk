@@ -46,6 +46,14 @@ export const queryKeys = {
     all: ['channels'] as const,
     list: ['channels', 'list'] as const,
   },
+  reorder: {
+    all: ['reorder'] as const,
+    list: ['reorder', 'list'] as const,
+  },
+  notifications: {
+    all: ['notifications'] as const,
+    list: ['notifications', 'list'] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     summary: ['dashboard', 'summary'] as const,
@@ -66,4 +74,6 @@ export const stockAffectedQueryKeys = [
   // 注文が動けば売上集計と顧客の累計も変わる（Phase 2）。
   queryKeys.sales.all,
   queryKeys.customers.all,
+  // 在庫が動けば発注推奨の残日数も変わる（Phase 4）。
+  queryKeys.reorder.all,
 ] as const;

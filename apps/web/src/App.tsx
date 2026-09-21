@@ -15,6 +15,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
 import { OrdersPage } from '@/features/orders/OrdersPage';
 import { ProductsPage } from '@/features/products/ProductsPage';
+import { ReorderPage } from '@/features/reorder/ReorderPage';
 import { SalesPage } from '@/features/sales/SalesPage';
 import { isSupabaseConfigured } from '@/lib/env';
 
@@ -78,6 +79,7 @@ function AppRoutes() {
         <Route path="/customers/:customerId" element={<CustomerDetailPage />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/data" element={<DataPage />} />
+        <Route path="/reorder" element={<ReorderPage />} />
         <Route path="/channels" element={<ChannelsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

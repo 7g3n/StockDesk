@@ -41,6 +41,13 @@ export const productFormSchema = z
       .min(0, '0 以上で入力してください')
       .max(100_000, '値が大きすぎます'),
     status: z.enum(['active', 'archived']),
+    // 発注から入荷までの日数。空欄なら店舗の既定値を使う（Phase 4）。
+    leadTimeDays: z
+      .number({ invalid_type_error: '数値を入力してください' })
+      .int('整数で入力してください')
+      .min(0, '0 以上で入力してください')
+      .max(365, '値が大きすぎます')
+      .nullable(),
   })
   .refine((value) => value.costPrice <= value.unitPrice, {
     // 原価が売価を上回る登録は、多くの場合は入力ミス。保存はできるが警告したいので
