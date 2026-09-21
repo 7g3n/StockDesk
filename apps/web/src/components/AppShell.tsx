@@ -17,6 +17,9 @@ const NAV_ITEMS = [
   { to: '/', label: 'ダッシュボード', end: true },
   { to: '/products', label: '商品・在庫', end: false },
   { to: '/orders', label: '注文', end: false },
+  { to: '/customers', label: '顧客', end: false },
+  { to: '/sales', label: '売上', end: false },
+  { to: '/data', label: 'データ入出力', end: false },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -26,10 +29,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-8">
-            <span className="text-base font-bold tracking-tight text-slate-900">StockDesk</span>
-            <nav className="flex items-center gap-1" aria-label="主要メニュー">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-6">
+            <span className="shrink-0 text-base font-bold tracking-tight text-slate-900">
+              StockDesk
+            </span>
+            {/*
+              項目が増えたので、幅が足りないときは折り返さず横スクロールさせる。
+              折り返すとヘッダーの高さが変わって本文が上下し、
+              単語の途中で改行されて読めなくなる。
+            */}
+            <nav
+              className="flex min-w-0 items-center gap-1 overflow-x-auto"
+              aria-label="主要メニュー"
+            >
               {NAV_ITEMS.map((item) => (
                 <NavLink
                   key={item.to}
@@ -37,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   end={item.end}
                   className={({ isActive }) =>
                     cn(
-                      'rounded-md px-3 py-1.5 text-sm font-medium transition',
+                      'whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition',
                       isActive
                         ? 'bg-brand-50 text-brand-700'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',

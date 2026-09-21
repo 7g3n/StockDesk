@@ -202,3 +202,53 @@ TypeScript 側（`packages/core/src/errors.ts`）がこれを型付きのエラ�
 | `stock_movements_product_idx` (product_id, created_at desc) | 商品ごとの履歴             |
 
 在庫アラート（`stock_quantity <= low_stock_threshold`）は列同士の比較になるため索引が効かない。Phase 1 では取り扱い中の商品を全件取得してアプリ側で絞っている。商品点数が数千を超えたら、この条件を持つビューか生成列 + 部分索引に切り替える。**その判断の分岐点は「表示のために全件取得が必要になったとき」**で、現時点では早すぎる最適化になる。
+
+---
+
+## Phase 2 で追加したもの
+
+### orders.external_order_id
+
+外部EC/モールでの注文番号。自社ECの手入力注文では NULL。
+
+```sql
+create unique index orders_external_order_id_key
+  on orders (external_order_id) where external_order_id is not null;
+```
+
+部分索引にしているのは、NULL（手入力の注文）が複数あってよいため。この一意制約が CSV 取り込みの冪等性を支えている。
+
+### 集計ビュー
+
+| ビュー             | 単位       | 備考                                            |
+| ------------------ | ---------- | ----------------------------------------------- |
+| `daily_sales`      | JST の日付 | キャンセル除外。商品売上と送料を分けて持つ      |
+| `monthly_sales`    | JST の月初 | 同上                                            |
+| `product_sales`    | SKU        | 商品が削除されても実績が残るよう SKU を軸にする |
+| `customer_summary` | 顧客       | 注文が 0 件の顧客も出すため left join           |
+
+すべて `with (security_invoker = on)`。これが無いとビュー経由で元テーブルの RLS が効かない。
+
+**`product_sales` の軸を `product_id` ではなく `sku` にした理由**: 商品が削除されると `order_items.product_id` は NULL になるが、売った事実は残る。SKU は伝票に複写された業務上の識別子なので、実績の軸としてはこちらが安定している。商品名は表記が変わりうるため、最新の注文時点の表記を代表として使う。
+
+**日付を JST で切る理由**: DB のタイムゾーンは UTC。`ordered_at::date` では日本時間 9:00 より前の注文が前日に計上される。
+
+### import_orders(jsonb)
+
+CSV 取り込みの入口。1トランザクションで全件を処理し、1件でも失敗したら何も残さない。
+
+処理の順序:
+
+1. `external_order_id` が既にあればスキップ（冪等性）
+2. メールアドレスで顧客を名寄せ（無ければ作成）
+3. 明細の SKU を `product_id` に解決（未登録なら例外）
+4. `create_order()` を呼ぶ（在庫の引き当てはここで起きる）
+5. `external_order_id` を書き込む
+
+SKU の解決を DB 側で行うのは、クライアントで SKU → UUID に変換すると、取得と登録の間に商品が変わりうるため。
+
+### create_order の拡張
+
+`p_items` の各要素に `unit_price` を指定できるようにした。指定があればその値を、無ければ商品マスタの現在価格を明細に複写する。署名は Phase 1 と同一なので GRANT はそのまま有効。
+
+画面からは渡さない。取り込み専用の逃げ道であり、UI に価格の手入力欄は設けていない。

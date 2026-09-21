@@ -19,6 +19,19 @@ export const queryKeys = {
     list: (filters: { status?: string; search?: string }) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
   },
+  customers: {
+    all: ['customers'] as const,
+    list: (filters: { search?: string; sort?: string }) => ['customers', 'list', filters] as const,
+    detail: (id: string) => ['customers', 'detail', id] as const,
+    orders: (id: string) => ['customers', 'orders', id] as const,
+    options: ['customers', 'options'] as const,
+  },
+  sales: {
+    all: ['sales'] as const,
+    daily: (days: number) => ['sales', 'daily', days] as const,
+    monthly: (months: number) => ['sales', 'monthly', months] as const,
+    products: ['sales', 'products'] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     summary: ['dashboard', 'summary'] as const,
@@ -36,4 +49,7 @@ export const stockAffectedQueryKeys = [
   queryKeys.products.all,
   queryKeys.orders.all,
   queryKeys.dashboard.all,
+  // 注文が動けば売上集計と顧客の累計も変わる（Phase 2）。
+  queryKeys.sales.all,
+  queryKeys.customers.all,
 ] as const;

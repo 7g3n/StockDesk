@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { Button, Field, InlineError, Input, Modal, Select, Textarea } from '@/components/ui';
+import { useCustomerOptions } from '@/features/customers/api';
 import { useProducts } from '@/features/products/api';
 
 import { useCreateOrder } from './api';
@@ -38,6 +39,7 @@ const EMPTY_VALUES: OrderFormValues = {
 export function NewOrderDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const createOrder = useCreateOrder();
   const products = useProducts({});
+  const customers = useCustomerOptions();
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -45,6 +47,7 @@ export function NewOrderDialog({ open, onClose }: { open: boolean; onClose: () =
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -128,6 +131,39 @@ export function NewOrderDialog({ open, onClose }: { open: boolean; onClose: () =
       widthClassName="max-w-3xl"
     >
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
+        {/*
+          既存顧客を選ぶと、顧客名・メール・住所を差し込んだうえで customer_id を紐付ける。
+          注文側は顧客情報のスナップショットを持つので、ここで入れた値は
+          後から顧客マスタを変更しても書き換わらない（Phase 1 の設計どおり）。
+        */}
+        <Field
+          label="既存の顧客から選ぶ"
+          htmlFor="customerPicker"
+          hint="選ばずに直接入力もできます（新規のお客様はそのまま入力）"
+        >
+          <Select
+            id="customerPicker"
+            defaultValue=""
+            onChange={(event) => {
+              const picked = (customers.data ?? []).find(
+                (customer) => customer.id === event.target.value,
+              );
+              setValue('customerId', picked?.id ?? null);
+              setValue('customerName', picked?.name ?? '', { shouldValidate: true });
+              setValue('customerEmail', picked?.email ?? '');
+              setValue('shippingAddress', picked?.address ?? '');
+            }}
+          >
+            <option value="">選択しない（新規のお客様）</option>
+            {(customers.data ?? []).map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.name}
+                {customer.email ? `（${customer.email}）` : ''}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             label="顧客名"

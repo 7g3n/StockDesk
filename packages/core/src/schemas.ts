@@ -93,6 +93,19 @@ export const orderFormSchema = z.object({
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;
 
+export const customerFormSchema = z.object({
+  name: z.string().trim().min(1, '顧客名は必須です').max(200, '顧客名が長すぎます'),
+  // メールは任意。電話のみの顧客がいるため必須にしない。
+  // ただし入っている場合は、取り込み時の名寄せキーになるので書式を確認する。
+  email: z.union([z.literal(''), z.string().trim().email('メールアドレスの形式が不正です')]),
+  phone: z.string().trim().max(50, '電話番号が長すぎます').default(''),
+  postalCode: z.string().trim().max(20, '郵便番号が長すぎます').default(''),
+  address: z.string().trim().max(500, '住所が長すぎます').default(''),
+  note: z.string().max(1000, 'メモが長すぎます').default(''),
+});
+
+export type CustomerFormValues = z.infer<typeof customerFormSchema>;
+
 export const credentialsSchema = z.object({
   email: z.string().trim().min(1, 'メールアドレスを入力してください').email('形式が不正です'),
   password: z.string().min(6, 'パスワードは 6 文字以上で入力してください'),

@@ -127,6 +127,8 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          // 外部EC/モールの注文番号。CSV 取り込みの重複判定に使う（Phase 2）。
+          external_order_id: string | null;
         };
         // 注文の作成とステータス変更は RPC（create_order / update_order_status）経由。
         // 在庫と不可分なので、直接の INSERT は型としても塞いでおく。
@@ -210,7 +212,55 @@ export type Database = {
         ];
       };
     };
-    Views: Record<never, never>;
+    // 集計ビュー（Phase 2）。読み取り専用。
+    // 集計を DB 側に置く理由は supabase/migrations/..._phase2_sales_and_import.sql を参照。
+    Views: {
+      daily_sales: {
+        Row: {
+          sales_date: string;
+          order_count: number;
+          total_amount: number;
+          shipping_amount: number;
+          item_amount: number;
+        };
+        Relationships: [];
+      };
+      monthly_sales: {
+        Row: {
+          month_start: string;
+          order_count: number;
+          total_amount: number;
+          shipping_amount: number;
+          item_amount: number;
+        };
+        Relationships: [];
+      };
+      product_sales: {
+        Row: {
+          sku: string;
+          product_name: string;
+          product_id: string | null;
+          quantity: number;
+          amount: number;
+          order_count: number;
+          last_ordered_at: string | null;
+        };
+        Relationships: [];
+      };
+      customer_summary: {
+        Row: {
+          customer_id: string;
+          name: string;
+          email: string | null;
+          phone: string;
+          order_count: number;
+          total_amount: number;
+          first_ordered_at: string | null;
+          last_ordered_at: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       create_order: {
         Args: {
@@ -243,6 +293,16 @@ export type Database = {
         };
         Returns: number;
       };
+      import_orders: {
+        Args: {
+          p_orders: unknown[];
+        };
+        Returns: {
+          created: number;
+          skipped: number;
+          order_numbers: string[];
+        };
+      };
       verify_stock_integrity: {
         Args: Record<never, never>;
         Returns: {
@@ -272,3 +332,11 @@ export type OrderRow = Tables<'orders'>;
 export type OrderItemRow = Tables<'order_items'>;
 export type StockMovementRow = Tables<'stock_movements'>;
 export type ProfileRow = Tables<'profiles'>;
+
+export type Views<T extends keyof Database['public']['Views']> =
+  Database['public']['Views'][T]['Row'];
+
+export type DailySalesView = Views<'daily_sales'>;
+export type MonthlySalesView = Views<'monthly_sales'>;
+export type ProductSalesView = Views<'product_sales'>;
+export type CustomerSummaryView = Views<'customer_summary'>;

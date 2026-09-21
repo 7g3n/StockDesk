@@ -4,11 +4,15 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { Card, LoadingBlock } from '@/components/ui';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { CustomerDetailPage } from '@/features/customers/CustomerDetailPage';
+import { CustomersPage } from '@/features/customers/CustomersPage';
+import { DataPage } from '@/features/data/DataPage';
 import { SessionProvider, useSession } from '@/features/auth/session';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
 import { OrdersPage } from '@/features/orders/OrdersPage';
 import { ProductsPage } from '@/features/products/ProductsPage';
+import { SalesPage } from '@/features/sales/SalesPage';
 import { isSupabaseConfigured } from '@/lib/env';
 
 import { SetupNotice } from './SetupNotice';
@@ -52,6 +56,10 @@ function AuthenticatedRoutes() {
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+        <Route path="/customers" element={<CustomersPage />} />
+        <Route path="/customers/:customerId" element={<CustomerDetailPage />} />
+        <Route path="/sales" element={<SalesPage />} />
+        <Route path="/data" element={<DataPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>
