@@ -1,0 +1,61 @@
+/*
+ * 帳票の印刷用スタイル。
+ *
+ * PDF 生成ライブラリ（jsPDF / pdf-lib）ではなくブラウザの印刷機能を使う判断:
+ *
+ *   1. 日本語フォントの埋め込みが要らない。
+ *      PDF ライブラリで日本語を出すには数MBのフォントをバンドルに載せることになる。
+ *      ブラウザ印刷なら OS のフォントがそのまま使える。
+ *   2. レイアウトを HTML / CSS で書ける。既存の画面と同じ技術で保守できる。
+ *   3. 宅配便の伝票は実際に紙で刷る。PDF を経由しない方が手順が短い。
+ *      「PDF として保存」も同じ画面から選べる。
+ *
+ *   代償: 余白やヘッダー・フッターの細部がブラウザ依存になる。
+ *   角印の位置指定のような厳密な帳票要件が出てきたら、そのときは
+ *   Worker 側での PDF 生成に移す。
+ */
+
+@media print {
+  /* 画面用の要素（ナビ、ボタン）は刷らない */
+  .print-hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .print-sheet {
+    /* 1帳票 = 1ページ。最後の1枚で余分な白紙を出さない */
+    break-after: page;
+    page-break-after: always;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .print-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* 明細が長い注文で、表の途中に改ページが入って行が分断されるのを防ぐ */
+  .print-sheet tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ラベルは1枚ずつ切り離すので、枠線は印刷でも残す */
+  .print-label {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #000 !important;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}

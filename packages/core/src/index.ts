@@ -17,4 +17,6 @@ export * from './schemas.js';
 export * from './csv.js';
 export * from './order-import.js';
 export * from './sales.js';
+export * from './permissions.js';
+export * from './channel-mock.js';
 export * from './database.types.js';

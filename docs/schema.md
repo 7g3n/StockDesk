@@ -252,3 +252,62 @@ SKU の解決を DB 側で行うのは、クライアントで SKU → UUID に�
 `p_items` の各要素に `unit_price` を指定できるようにした。指定があればその値を、無ければ商品マスタの現在価格を明細に複写する。署名は Phase 1 と同一なので GRANT はそのまま有効。
 
 画面からは渡さない。取り込み専用の逃げ道であり、UI に価格の手入力欄は設けていない。
+
+---
+
+## Phase 3 で追加したもの
+
+### 役割の判定
+
+| 関数                     | 役割                              |
+| ------------------------ | --------------------------------- |
+| `current_actor_role()`   | ログイン中のユーザーの role       |
+| `has_any_role(variadic)` | 指定した役割のいずれかを持つか    |
+| `assert_write_access()`  | 書き込み操作の入口。viewer を拒否 |
+| `assert_owner_access()`  | 管理者専用操作の入口              |
+
+いずれも **SECURITY DEFINER**。RLS ポリシーの中から `profiles` を読むため、ポリシー評価の中でさらにポリシーが評価される構造（RLS の再帰）を避ける必要がある。
+
+定期処理は service_role で接続し profiles を持たないので、`has_any_role` は service_role を無条件に許可する。
+
+### RLS の張り替え
+
+Phase 1 の「認証済みなら全操作可」を、役割ごとの条件に置き換えた。
+
+| テーブル        | SELECT | 書き込み                           |
+| --------------- | ------ | ---------------------------------- |
+| products        | 全員   | owner                              |
+| customers       | 全員   | owner, staff                       |
+| orders          | 全員   | owner, staff（備考・宛先の列のみ） |
+| order_items     | 全員   | なし（RPC のみ）                   |
+| stock_movements | 全員   | なし（RPC のみ）                   |
+| shop_settings   | 全員   | owner                              |
+| sales_channels  | 全員   | owner                              |
+
+読み取りを全員に開くのは、そうしないと「閲覧のみ」という役割が成立しないため。
+
+**注意**: RLS の `USING` で弾かれた UPDATE は、エラーではなく「0 行更新」として返る。アプリ側は `.select().single()` を付けて、変更されていないのに成功扱いにしないようにしている。
+
+### create_order の分割
+
+`create_order_internal`（業務ロジック）と `create_order`（権限確認 + 委譲）に分けた。権限確認を足すたびに 90 行の関数を複製し続けるのを避けるため。内部実装は `authenticated` から EXECUTE を剥奪してある。
+
+### set_member_role(uuid, user_role)
+
+役割の変更。`profiles.role` は列単位の GRANT で直接更新を禁止しているので、変更経路はこの関数だけ。
+
+**最後の owner は降格できない。** 許すと誰も権限を変更できない状態になる。
+
+### shop_settings
+
+単一行テーブル（`id boolean primary key default true check (id)`）。納品書の差出人欄に使う。
+
+key-value 形式にしないのは、項目ごとに型が決まっていて増減もしないため。列で持つ方が型で守れる。INSERT / DELETE は GRANT で塞いである。
+
+### sales_channels
+
+販売チャネルのマスタ。`orders.channel` から FK を張った。
+
+enum ではなくテーブルにしたのは、モール連携で値が増えていく想定だから。enum は値の追加にマイグレーションが必要になる。
+
+`order_prefix` は取り込み時の `external_order_id` に付ける接頭辞。チャネル間で注文番号が偶然重なると、片方が「取り込み済み」として飛ばされてしまうのを防ぐ。

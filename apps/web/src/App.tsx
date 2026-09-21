@@ -6,7 +6,10 @@ import { Card, LoadingBlock } from '@/components/ui';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { CustomerDetailPage } from '@/features/customers/CustomerDetailPage';
 import { CustomersPage } from '@/features/customers/CustomersPage';
+import { ChannelsPage } from '@/features/channels/ChannelsPage';
 import { DataPage } from '@/features/data/DataPage';
+import { PrintPage } from '@/features/print/PrintPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SessionProvider, useSession } from '@/features/auth/session';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
@@ -50,6 +53,21 @@ function AuthenticatedRoutes() {
   }
 
   return (
+    <Routes>
+      {/*
+        帳票はナビゲーションの外に置く。
+        印刷用のレイアウトは画面の枠（ヘッダー・余白）と両立しないため、
+        AppShell の中に入れない。
+      */}
+      <Route path="/print/delivery-note" element={<PrintPage doc="delivery-note" />} />
+      <Route path="/print/shipping-label" element={<PrintPage doc="shipping-label" />} />
+      <Route path="*" element={<AppRoutes />} />
+    </Routes>
+  );
+}
+
+function AppRoutes() {
+  return (
     <AppShell>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
@@ -60,6 +78,8 @@ function AuthenticatedRoutes() {
         <Route path="/customers/:customerId" element={<CustomerDetailPage />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/data" element={<DataPage />} />
+        <Route path="/channels" element={<ChannelsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>

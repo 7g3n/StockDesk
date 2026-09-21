@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 
 import { PageHeader } from '@/components/AppShell';
 import { Button, Card, CardHeader, InlineError, Td, Th } from '@/components/ui';
+import { useCan } from '@/features/auth/permissions';
 
 import {
   exportCustomersCsv,
@@ -76,6 +77,8 @@ function ExportRow({
 export function DataPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importOrders = useImportOrders();
+  // 取り込みは1回で大量の在庫が動くため管理者のみ。書き出しは全員に開く。
+  const canImport = useCan('data:import');
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [encoding, setEncoding] = useState<string | null>(null);
@@ -136,9 +139,15 @@ export function DataPage() {
             />
 
             <div className="space-y-4 px-5 py-4">
+              {!canImport && (
+                <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  注文の取り込みは管理者のみが行えます。書き出しは全員が利用できます。
+                </p>
+              )}
               <div>
                 <input
                   ref={fileInputRef}
+                  disabled={!canImport}
                   type="file"
                   accept=".csv,text/csv"
                   aria-label="取り込む CSV ファイル"

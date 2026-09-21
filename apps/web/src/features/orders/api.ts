@@ -19,6 +19,8 @@ export type OrderWithItems = Order & { order_items: OrderItem[] };
 export type OrderFilters = {
   status?: OrderStatus | 'all';
   search?: string;
+  /** 販売チャネルでの絞り込み（Phase 3）。空文字はすべて。 */
+  channel?: string;
 };
 
 async function fetchOrders(filters: OrderFilters): Promise<OrderWithItems[]> {
@@ -34,9 +36,15 @@ async function fetchOrders(filters: OrderFilters): Promise<OrderWithItems[]> {
     query = query.eq('status', filters.status);
   }
 
+  if (filters.channel) {
+    query = query.eq('channel', filters.channel);
+  }
+
   if (filters.search) {
     const pattern = `%${filters.search}%`;
-    query = query.or(`order_number.ilike.${pattern},customer_name.ilike.${pattern}`);
+    query = query.or(
+      `order_number.ilike.${pattern},customer_name.ilike.${pattern},external_order_id.ilike.${pattern}`,
+    );
   }
 
   const { data, error } = await query;

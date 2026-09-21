@@ -20,6 +20,8 @@ const NAV_ITEMS = [
   { to: '/customers', label: '顧客', end: false },
   { to: '/sales', label: '売上', end: false },
   { to: '/data', label: 'データ入出力', end: false },
+  { to: '/channels', label: '販売チャネル', end: false },
+  { to: '/settings', label: '設定', end: false },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {

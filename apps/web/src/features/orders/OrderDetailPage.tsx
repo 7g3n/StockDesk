@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/AppShell';
 import { OrderStatusBadge } from '@/components/badges';
-import { Card, CardHeader, ErrorBlock, LoadingBlock, Td, Th } from '@/components/ui';
+import { Button, Card, CardHeader, ErrorBlock, LoadingBlock, Td, Th } from '@/components/ui';
+import { useCan } from '@/features/auth/permissions';
 
 import { useOrder } from './api';
 import { OrderStatusActions } from './OrderStatusActions';
@@ -27,6 +28,7 @@ function DefinitionRow({ label, value }: { label: string; value: string }) {
 export function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const order = useOrder(orderId);
+  const canWrite = useCan('order:write');
 
   if (order.isPending) {
     return (
@@ -59,15 +61,34 @@ export function OrderDetailPage() {
         title={data.order_number}
         description={`受付日時 ${new Date(data.ordered_at).toLocaleString('ja-JP')}`}
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <OrderStatusBadge status={data.status} />
+            {/* 帳票は閲覧のみの権限でも出せる。刷るだけでデータは変わらないため */}
+            <Button
+              size="sm"
+              onClick={() =>
+                window.open(`/print/delivery-note?ids=${data.id}`, '_blank', 'noopener')
+              }
+            >
+              納品書
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                window.open(`/print/shipping-label?ids=${data.id}`, '_blank', 'noopener')
+              }
+            >
+              出荷ラベル
+            </Button>
             {/* 詳細画面では前進とキャンセルの両方を出す（一覧は前進のみ） */}
-            <OrderStatusActions
-              orderId={data.id}
-              status={data.status}
-              size="md"
-              showAllTransitions
-            />
+            {canWrite && (
+              <OrderStatusActions
+                orderId={data.id}
+                status={data.status}
+                size="md"
+                showAllTransitions
+              />
+            )}
           </div>
         }
       />

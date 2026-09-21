@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/AppShell';
+import { useCan } from '@/features/auth/permissions';
 import {
   Button,
   Card,
@@ -48,6 +49,7 @@ export function CustomersPage() {
     : 'total_amount';
 
   const customers = useCustomerSummaries({ search, sort });
+  const canWrite = useCan('customer:write');
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const updateParam = (key: string, value: string | null) => {
@@ -63,9 +65,11 @@ export function CustomersPage() {
         title="顧客"
         description="注文履歴と紐付いた顧客の一覧です。累計購入額と最終注文日は注文から自動で集計されます。"
         action={
-          <Button variant="primary" onClick={() => setDialogOpen(true)}>
-            顧客を登録
-          </Button>
+          canWrite ? (
+            <Button variant="primary" onClick={() => setDialogOpen(true)}>
+              顧客を登録
+            </Button>
+          ) : null
         }
       />
 

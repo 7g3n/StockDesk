@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/AppShell';
+import { useCan } from '@/features/auth/permissions';
 import { StockLevelBadge } from '@/components/badges';
 import { Button, Card, EmptyState, ErrorBlock, Input, LoadingBlock, Td, Th } from '@/components/ui';
 
@@ -24,6 +25,9 @@ export function ProductsPage() {
   const onlyAlerts = searchParams.get('alerts') === '1';
 
   const products = useProducts({ search, onlyAlerts });
+  // 商品マスタは owner のみ。在庫の調整は日々の業務なので staff も行える。
+  const canEditProduct = useCan('product:write');
+  const canAdjustStock = useCan('stock:adjust');
 
   const [formOpen, setFormOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -42,15 +46,17 @@ export function ProductsPage() {
         title="商品・在庫"
         description="SKU ごとの在庫数と販売価格を管理します。在庫数は増減の記録を通じてのみ変更されます。"
         action={
-          <Button
-            variant="primary"
-            onClick={() => {
-              setSelected(undefined);
-              setFormOpen(true);
-            }}
-          >
-            商品を登録
-          </Button>
+          canEditProduct ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                setSelected(undefined);
+                setFormOpen(true);
+              }}
+            >
+              商品を登録
+            </Button>
+          ) : null
         }
       />
 
@@ -135,25 +141,32 @@ export function ProductsPage() {
                     </Td>
                     <Td align="right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelected(product);
-                            setAdjustOpen(true);
-                          }}
-                        >
-                          在庫調整
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setSelected(product);
-                            setFormOpen(true);
-                          }}
-                        >
-                          編集
-                        </Button>
+                        {canAdjustStock && (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelected(product);
+                              setAdjustOpen(true);
+                            }}
+                          >
+                            在庫調整
+                          </Button>
+                        )}
+                        {canEditProduct && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelected(product);
+                              setFormOpen(true);
+                            }}
+                          >
+                            編集
+                          </Button>
+                        )}
+                        {!canAdjustStock && !canEditProduct && (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
                       </div>
                     </Td>
                   </tr>

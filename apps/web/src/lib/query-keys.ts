@@ -16,7 +16,8 @@ export const queryKeys = {
   },
   orders: {
     all: ['orders'] as const,
-    list: (filters: { status?: string; search?: string }) => ['orders', 'list', filters] as const,
+    list: (filters: { status?: string; search?: string; channel?: string }) =>
+      ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
   },
   customers: {
@@ -31,6 +32,19 @@ export const queryKeys = {
     daily: (days: number) => ['sales', 'daily', days] as const,
     monthly: (months: number) => ['sales', 'monthly', months] as const,
     products: ['sales', 'products'] as const,
+  },
+  members: {
+    all: ['members'] as const,
+    list: ['members', 'list'] as const,
+    me: (userId: string) => ['members', 'me', userId] as const,
+  },
+  settings: {
+    all: ['settings'] as const,
+    shop: ['settings', 'shop'] as const,
+  },
+  channels: {
+    all: ['channels'] as const,
+    list: ['channels', 'list'] as const,
   },
   dashboard: {
     all: ['dashboard'] as const,

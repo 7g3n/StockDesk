@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/AppShell';
+import { useCan } from '@/features/auth/permissions';
 import { OrderStatusBadge } from '@/components/badges';
 import {
   Button,
@@ -39,6 +40,7 @@ export function CustomerDetailPage() {
   const customer = useCustomer(customerId);
   const orders = useCustomerOrders(customerId);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const canWrite = useCan('customer:write');
 
   const totals = useMemo(() => {
     const rows = orders.data ?? [];
@@ -79,7 +81,7 @@ export function CustomerDetailPage() {
       <PageHeader
         title={data.name}
         description={data.email ?? 'メールアドレス未登録'}
-        action={<Button onClick={() => setDialogOpen(true)}>編集</Button>}
+        action={canWrite ? <Button onClick={() => setDialogOpen(true)}>編集</Button> : null}
       />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

@@ -12,6 +12,7 @@
 
 export type OrderStatusEnum = 'pending' | 'preparing' | 'shipped' | 'completed' | 'cancelled';
 export type ProductStatusEnum = 'active' | 'archived';
+// 役割の表示名や権限表は permissions.ts が持つ。ここは DB のスキーマに対応する型のみ。
 export type UserRoleEnum = 'owner' | 'staff' | 'viewer';
 export type StockMovementReasonEnum =
   'order_allocated' | 'order_cancelled' | 'purchase_received' | 'manual_adjustment' | 'return';
@@ -146,6 +147,13 @@ export type Database = {
             referencedRelation: 'customers';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'orders_channel_fkey';
+            columns: ['channel'];
+            isOneToOne: false;
+            referencedRelation: 'sales_channels';
+            referencedColumns: ['code'];
+          },
         ];
       };
       order_items: {
@@ -178,6 +186,54 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      shop_settings: {
+        Row: {
+          id: boolean;
+          shop_name: string;
+          postal_code: string;
+          address: string;
+          phone: string;
+          email: string;
+          note: string;
+          updated_at: string;
+        };
+        // 単一行テーブル。行の追加・削除は GRANT で塞いである。
+        Insert: Record<string, never>;
+        Update: {
+          shop_name?: string;
+          postal_code?: string;
+          address?: string;
+          phone?: string;
+          email?: string;
+          note?: string;
+        };
+        Relationships: [];
+      };
+      sales_channels: {
+        Row: {
+          code: string;
+          name: string;
+          order_prefix: string;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          code: string;
+          name: string;
+          order_prefix?: string;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          name?: string;
+          order_prefix?: string;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
       };
       stock_movements: {
         Row: {
@@ -293,6 +349,17 @@ export type Database = {
         };
         Returns: number;
       };
+      set_member_role: {
+        Args: {
+          p_user_id: string;
+          p_role: UserRoleEnum;
+        };
+        Returns: Database['public']['Tables']['profiles']['Row'];
+      };
+      current_actor_role: {
+        Args: Record<never, never>;
+        Returns: UserRoleEnum | null;
+      };
       import_orders: {
         Args: {
           p_orders: unknown[];
@@ -332,6 +399,8 @@ export type OrderRow = Tables<'orders'>;
 export type OrderItemRow = Tables<'order_items'>;
 export type StockMovementRow = Tables<'stock_movements'>;
 export type ProfileRow = Tables<'profiles'>;
+export type ShopSettingsRow = Tables<'shop_settings'>;
+export type SalesChannelRow = Tables<'sales_channels'>;
 
 export type Views<T extends keyof Database['public']['Views']> =
   Database['public']['Views'][T]['Row'];
